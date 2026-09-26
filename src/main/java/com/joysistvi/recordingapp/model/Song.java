@@ -24,8 +24,6 @@ public class Song {
         this.albumId = albumId;
     }
 
-
-
     // Getters and setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
