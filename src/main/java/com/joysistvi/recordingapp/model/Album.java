@@ -3,42 +3,71 @@ package com.joysistvi.recordingapp.model;
 public class Album {
 
     private int id;
-    private String title;
+    private String name;
+    private int year;
     private int artistId;
-    private int releaseYear;
+    private String artistName;
 
-    public Album(String title, int artistId, int releaseYear) {
-        this.title = title;
+    // Used when adding a new album (id not yet assigned by the database)
+    public Album(String name, int year, int artistId) {
+        this.name = name;
+        this.year = year;
         this.artistId = artistId;
-        this.releaseYear = releaseYear;
     }
 
-    public Album(int id, String title, int artistId, int releaseYear) {
+    // Used when updating an existing album
+    public Album(int id, String name, int year, int artistId) {
         this.id = id;
-        this.title = title;
+        this.name = name;
+        this.year = year;
         this.artistId = artistId;
-        this.releaseYear = releaseYear;
     }
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    // Used when reading from the database (joined with the artist's name)
+    public Album(int id, String name, int year, String artistName) {
+        this.id = id;
+        this.name = name;
+        this.year = year;
+        this.artistName = artistName;
+    }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public int getId() {
+        return id;
+    }
 
-    public int getArtistId() { return artistId; }
-    public void setArtistId(int artistId) { this.artistId = artistId; }
+    public void setId(int id) {
+        this.id = id;
+    }
 
-    public int getReleaseYear() { return releaseYear; }
-    public void setReleaseYear(int releaseYear) { this.releaseYear = releaseYear; }
+    public String getName() {
+        return name;
+    }
 
-    @Override
-    public String toString() {
-        return "Album{" +
-                "id=" + id +
-                ", title='" + title + '\'' +
-                ", artistId=" + artistId +
-                ", releaseYear=" + releaseYear +
-                '}';
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getYear() {
+        return year;
+    }
+
+    public void setYear(int year) {
+        this.year = year;
+    }
+
+    public int getArtistId() {
+        return artistId;
+    }
+
+    public void setArtistId(int artistId) {
+        this.artistId = artistId;
+    }
+
+    public String getArtistName() {
+        return artistName;
+    }
+
+    public void setArtistName(String artistName) {
+        this.artistName = artistName;
     }
 }

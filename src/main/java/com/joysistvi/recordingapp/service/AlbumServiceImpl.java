@@ -1,35 +1,23 @@
 package com.joysistvi.recordingapp.service;
 
 import com.joysistvi.recordingapp.model.Album;
-import com.joysistvi.recordingapp.repository.AlbumRepo;
+import com.joysistvi.recordingapp.repository.AlbumRepository;
 
+import java.time.Year;
 import java.util.List;
 
 public class AlbumServiceImpl implements AlbumService {
 
-    private final AlbumRepo albumRepo;
+    private final AlbumRepository albumRepository; // Composition
 
-    public AlbumServiceImpl(AlbumRepo albumRepo) {
-        this.albumRepo = albumRepo;
+    // Constructor injection
+    public AlbumServiceImpl(AlbumRepository albumRepository) {
+        this.albumRepository = albumRepository;
     }
 
     @Override
     public List<Album> getAllAlbums() {
-        return albumRepo.getAllAlbums();
-    }
-
-    @Override
-    public Album getAlbumById(int id) {
-        if (id <= 0) {
-            System.out.println("Invalid album ID.");
-            return null;
-        }
-
-        Album album = albumRepo.getAlbumById(id);
-        if (album == null) {
-            System.out.println("Album not found.");
-        }
-        return album;
+        return albumRepository.getAllAlbumsWithArtist();
     }
 
     @Override
@@ -38,72 +26,53 @@ public class AlbumServiceImpl implements AlbumService {
             System.out.println("Search keyword cannot be empty.");
             return List.of();
         }
-        return albumRepo.searchAlbum(keyword.trim());
+        return albumRepository.searchAlbum(keyword.trim());
     }
 
     @Override
-    public boolean createAlbum(Album album) {
-        if (album == null) {
-            System.out.println("Album object cannot be null.");
+    public boolean addAlbum(Album album) {
+        if (!isValid(album)) {
             return false;
         }
-        if (album.getTitle() == null || album.getTitle().trim().isEmpty()) {
-            System.out.println("Album title is required.");
-            return false;
-        }
-        if (album.getArtistId() <= 0) {
-            System.out.println("Album must belong to a valid artist.");
-            return false;
-        }
-
-        album.setTitle(album.getTitle().trim());
-        return albumRepo.createAlbum(album);
+        return albumRepository.createAlbum(album);
     }
 
     @Override
     public boolean updateAlbum(Album album) {
-        if (album == null || album.getId() <= 0) {
-            System.out.println("Invalid album data for update.");
+        if (album.getId() <= 0) {
+            System.out.println("Invalid album ID.");
             return false;
         }
-        if (album.getTitle() == null || album.getTitle().trim().isEmpty()) {
-            System.out.println("Album title cannot be empty.");
+        if (!isValid(album)) {
             return false;
         }
-
-        album.setTitle(album.getTitle().trim());
-        return albumRepo.updateAlbum(album);
-    }
-
-    @Override
-    public boolean archiveAlbum(int id) {
-        if (id <= 0) {
-            System.out.println("Invalid album ID for archive.");
-            return false;
-        }
-        return albumRepo.archiveAlbum(id);
-    }
-
-    @Override
-    public boolean restoreAlbum(int id) {
-        if (id <= 0) {
-            System.out.println("Invalid album ID for restore.");
-            return false;
-        }
-        return albumRepo.restoreAlbum(id);
+        return albumRepository.updateAlbum(album);
     }
 
     @Override
     public boolean deleteAlbum(int id) {
         if (id <= 0) {
-            System.out.println("Invalid album ID for deletion.");
+            System.out.println("Invalid album ID.");
             return false;
         }
-        return albumRepo.deleteAlbum(id);
+        return albumRepository.deleteAlbum(id);
     }
 
-    @Override
-    public List<Album> getAllArchivedAlbums() {
-        return albumRepo.getAllArchivedAlbums();
+    // Simple validation rules before hitting the database
+    private boolean isValid(Album album) {
+        if (album.getName() == null || album.getName().trim().isEmpty()) {
+            System.out.println("Album name is required.");
+            return false;
+        }
+        int currentYear = Year.now().getValue();
+        if (album.getYear() < 1900 || album.getYear() > currentYear + 1) {
+            System.out.println("Please enter a valid year (1900-" + (currentYear + 1) + ").");
+            return false;
+        }
+        if (album.getArtistId() <= 0) {
+            System.out.println("A valid artist ID is required.");
+            return false;
+        }
+        return true;
     }
 }

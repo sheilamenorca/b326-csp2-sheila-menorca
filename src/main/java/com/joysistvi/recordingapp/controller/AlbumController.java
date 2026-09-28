@@ -7,49 +7,29 @@ import java.util.List;
 
 public class AlbumController {
 
-    private final AlbumService albumService;
+    private final AlbumService albumService; // Composition
 
+    // Constructor injection
     public AlbumController(AlbumService albumService) {
         this.albumService = albumService;
     }
 
-    // READ
     public List<Album> handleViewAllAlbums() {
         return albumService.getAllAlbums();
     }
 
-    public Album handleGetAlbumById(int id) {
-        return albumService.getAlbumById(id);
-    }
-
-    public List<Album> searchAlbum(String keyword) {
+    public List<Album> handleSearchAlbum(String keyword) {
         return albumService.searchAlbum(keyword);
     }
 
-    public List<Album> handleViewArchivedAlbums() {
-        return albumService.getAllArchivedAlbums();
+    public boolean handleAddAlbum(Album album) {
+        return albumService.addAlbum(album);
     }
 
-    // CREATE
-    public boolean handleCreateAlbum(Album album) {
-        return albumService.createAlbum(album);
-    }
-
-    // UPDATE
     public boolean handleUpdateAlbum(Album album) {
         return albumService.updateAlbum(album);
     }
 
-    // ARCHIVE / RESTORE
-    public boolean handleArchiveAlbum(int id) {
-        return albumService.archiveAlbum(id);
-    }
-
-    public boolean handleRestoreAlbum(int id) {
-        return albumService.restoreAlbum(id);
-    }
-
-    // DELETE
     public boolean handleDeleteAlbum(int id) {
         return albumService.deleteAlbum(id);
     }

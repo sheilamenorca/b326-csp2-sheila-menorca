@@ -8,205 +8,151 @@ import java.util.Scanner;
 
 public class AlbumView {
 
-    private final AlbumController albumController;
+    private final AlbumController albumController; // Composition
     private final Scanner scanner;
+    private final boolean isAdmin;
 
-    public AlbumView(AlbumController albumController, Scanner scanner) {
+    // Constructor injection
+    public AlbumView(AlbumController albumController, Scanner scanner, boolean isAdmin) {
         this.albumController = albumController;
         this.scanner = scanner;
+        this.isAdmin = isAdmin;
     }
 
     public void run() {
         int choice;
-
         do {
+            clearScreen();
             printMenu();
-
             choice = promptChoice();
 
             switch (choice) {
                 case 1 -> viewAllAlbums();
                 case 2 -> searchAlbum();
-                case 3 -> addAlbum();
-                case 4 -> updateAlbum();
-                case 5 -> archiveAlbum();
-                case 6 -> restoreAlbum();
-                case 7 -> deleteAlbum();
-                case 8 -> viewArchivedAlbums();
-
-                case 0 -> System.out.println("Returning to main menu...");
+                case 3 -> { if (isAdmin) addAlbum(); else denyAccess(); }
+                case 4 -> { if (isAdmin) updateAlbum(); else denyAccess(); }
+                case 5 -> { if (isAdmin) deleteAlbum(); else denyAccess(); }
+                case 0 -> System.out.println("Returning to dashboard...");
                 default -> System.out.println("Invalid choice. Try again.");
             }
 
             if (choice != 0) {
-                System.out.println("\nPress Enter to continue...");
+                System.out.print("\nPress Enter to continue...");
                 scanner.nextLine();
             }
         } while (choice != 0);
     }
 
     private void printMenu() {
-        System.out.println("\n----- Album Management -----");
+        System.out.println("\n===== ALBUM CATALOG =====");
         System.out.println("1. View All Albums");
         System.out.println("2. Search Album");
-        System.out.println("3. Add Album");
-        System.out.println("4. Update Album");
-        System.out.println("5. Archive Album");
-        System.out.println("6. Restore Album");
-        System.out.println("7. Delete Album");
-        System.out.println("8. View All Archived Albums");
+        if (isAdmin) {
+            System.out.println("3. Add Album");
+            System.out.println("4. Update Album");
+            System.out.println("5. Delete Album");
+        }
         System.out.println("0. Back");
     }
 
-    public int promptChoice() {
+    private int promptChoice() {
         System.out.print("Choice: ");
         return readInt();
     }
 
-    private int readInt() {
-        while (true) {
-            String input = scanner.nextLine();
-            try {
-                return Integer.parseInt(input.trim());
-            } catch (RuntimeException e) {
-                System.out.print("Please enter a valid number: ");
-            }
-        }
-    }
-
     private void viewAllAlbums() {
-        System.out.println("\n----- View All Albums -----");
         List<Album> albums = albumController.handleViewAllAlbums();
         printAlbums(albums);
     }
 
-    private void viewArchivedAlbums() {
-        System.out.println("\n----- View All Archived Albums -----");
-        List<Album> albums = albumController.handleViewArchivedAlbums();
-        printAlbums(albums);
-    }
-
     private void searchAlbum() {
-        System.out.println("\n----- Search Albums -----");
-        System.out.print("Enter title: ");
+        System.out.print("Enter name keyword: ");
         String keyword = scanner.nextLine();
-        List<Album> albums = albumController.searchAlbum(keyword);
-        printAlbums(albums);
+        printAlbums(albumController.handleSearchAlbum(keyword));
     }
 
     private void addAlbum() {
-        System.out.println("\n----- Add Album -----");
-        System.out.print("Title: ");
-        String title = scanner.nextLine();
+        System.out.print("Name: ");
+        String name = scanner.nextLine();
+
+        System.out.print("Year: ");
+        int year = readInt();
 
         System.out.print("Artist ID: ");
         int artistId = readInt();
 
-        System.out.print("Release Year: ");
-        int releaseYear = readInt();
+        Album album = new Album(name, year, artistId);
 
-        Album album = new Album(title, artistId, releaseYear);
-
-        boolean isSuccess = albumController.handleCreateAlbum(album);
-        System.out.println(isSuccess ? "Album added successfully." : "Failed to add album.");
-
-        if (isSuccess) {
-            System.out.println();
-            viewAllAlbums(); // read-after-write
-        }
+        boolean success = albumController.handleAddAlbum(album);
+        System.out.println(success ? "Album added successfully." : "Failed to add album.");
     }
 
-    public void updateAlbum() {
-        System.out.println("\n----- Update Album -----");
-
-        // Show all albums first so the admin can see which ID to pick
-        viewAllAlbums();
-
+    private void updateAlbum() {
         System.out.print("Album ID to update: ");
         int id = readInt();
 
-        Album current = albumController.handleGetAlbumById(id);
+        System.out.print("New Name: ");
+        String name = scanner.nextLine();
 
-        if (current == null) {
-            System.out.println("No album found with ID " + id + ". Please check the ID and try again.");
-            return;
-        }
+        System.out.print("New Year: ");
+        int year = readInt();
 
-        System.out.print("New Title [" + current.getTitle() + "] (press Enter to keep the current): ");
-        String title = scanner.nextLine();
-        if (title.trim().isEmpty()) {
-            title = current.getTitle();
-        }
+        System.out.print("New Artist ID: ");
+        int artistId = readInt();
 
-        System.out.print("New Artist ID [" + current.getArtistId() + "] (press Enter to keep the current): ");
-        String artistIdInput = scanner.nextLine();
-        int artistId = artistIdInput.trim().isEmpty() ? current.getArtistId() : Integer.parseInt(artistIdInput.trim());
+        Album album = new Album(id, name, year, artistId);
 
-        System.out.print("New Release Year [" + current.getReleaseYear() + "] (press Enter to keep the current): ");
-        String yearInput = scanner.nextLine();
-        int releaseYear = yearInput.trim().isEmpty() ? current.getReleaseYear() : Integer.parseInt(yearInput.trim());
-
-        Album album = new Album(id, title, artistId, releaseYear);
-
-        boolean isSuccess = albumController.handleUpdateAlbum(album);
-        System.out.println(isSuccess ? "Album updated successfully." : "Failed to update album.");
-
-        if (isSuccess) {
-            System.out.println();
-            viewAllAlbums(); // read-after-write / refresh-after-mutation
-        }
-    }
-
-    private void archiveAlbum() {
-        System.out.println("\n----- Archive Album -----");
-        viewAllAlbums();
-
-        System.out.print("Album ID to archive: ");
-        int id = readInt();
-
-        boolean isSuccess = albumController.handleArchiveAlbum(id);
-        System.out.println(isSuccess ? "Album archived successfully." : "Failed to archive album.");
-    }
-
-    private void restoreAlbum() {
-        System.out.println("\n----- Restore Album -----");
-        viewArchivedAlbums();
-
-        System.out.print("Album ID to restore: ");
-        int id = readInt();
-
-        boolean isSuccess = albumController.handleRestoreAlbum(id);
-        System.out.println(isSuccess ? "Album restored successfully." : "Failed to restore album.");
+        boolean success = albumController.handleUpdateAlbum(album);
+        System.out.println(success ? "Album updated successfully." : "Failed to update album.");
     }
 
     private void deleteAlbum() {
-        System.out.println("\n----- Delete Album -----");
-        viewAllAlbums();
-
         System.out.print("Album ID to delete: ");
         int id = readInt();
 
-        boolean isSuccess = albumController.handleDeleteAlbum(id);
-        System.out.println(isSuccess ? "Album deleted successfully." : "Failed to delete album.");
+        boolean success = albumController.handleDeleteAlbum(id);
+        System.out.println(success ? "Album deleted successfully." : "Failed to delete album.");
     }
 
-    public void printAlbums(List<Album> albums) {
+    private void printAlbums(List<Album> albums) {
         if (albums.isEmpty()) {
             System.out.println("No albums found.");
             return;
         }
 
-        String border = "+" + "-".repeat(6) + "+" + "-".repeat(27) + "+" + "-".repeat(12) + "+" + "-".repeat(8) + "+";
+        String border = "+" + "-".repeat(6) + "+" + "-".repeat(22) + "+" + "-".repeat(8) + "+" + "-".repeat(22) + "+";
 
         System.out.println(border);
-        System.out.printf("| %-4s | %-25s | %-10s | %-6s |%n", "ID", "Title", "Artist ID", "Year");
+        System.out.printf("| %-4s | %-20s | %-6s | %-20s |%n", "ID", "Name", "Year", "Artist");
         System.out.println(border);
 
         for (Album album : albums) {
-            System.out.printf("| %-4s | %-25s | %-10s | %-6s |%n",
-                    album.getId(), album.getTitle(), album.getArtistId(), album.getReleaseYear());
+            System.out.printf("| %-4d | %-20s | %-6d | %-20s |%n",
+                    album.getId(), album.getName(), album.getYear(), album.getArtistName());
         }
 
         System.out.println(border);
+    }
+
+    private void denyAccess() {
+        System.out.println("Access denied. Admins only.");
+    }
+
+    // Clears the console using ANSI escape codes. Works in real terminals and in
+    // IntelliJ's Run console IF "Emulate terminal in output console" is enabled.
+    private void clearScreen() {
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
+    }
+
+    // Reads an int safely, re-prompting on invalid input, then consumes the trailing newline
+    private int readInt() {
+        while (!scanner.hasNextInt()) {
+            System.out.print("Please enter a valid number: ");
+            scanner.next();
+        }
+        int value = scanner.nextInt();
+        scanner.nextLine(); // consume leftover newline
+        return value;
     }
 }
